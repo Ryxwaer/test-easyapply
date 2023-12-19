@@ -1,7 +1,7 @@
 const CONST = {
-    User: 'your_username',
-    Pass: 'your_password',
-    Host: 'http://your-backend-host.com'
+    User: 'apiuser',
+    Pass: 'y3G2R74zZU0PhxElyuwv',
+    Host: 'http://localhost:3800'
 };
 
 export default CONST;

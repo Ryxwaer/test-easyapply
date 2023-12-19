@@ -79,34 +79,51 @@ const Form = () => {
 
     useEffect(() => {
         async function fetchData() {
-            var jobReqIdparam = window.location.search.substring(1).split("jobReqId=")[1];
-            if (!jobReqIdparam) {
-                setWarningAlert({text: localization.messages.badReqNumber, show: true});
-            } else {
-                if (!Number.isInteger(jobReqIdparam)) {
-                    jobReqIdparam = window.location.search.substring(1).split("jobReqId=")[1].split("&")[0];
-                }
-                const questionsData = await request.getRequest("/Form/getQuestions/"+jobReqIdparam);
-                if (!questionsData.questions) {
-                    setWarningAlert({text: localization.messages.badUrl, show: true});
-                } else {
-                    setQuestions(questionsData.questions);
-                    setResponses(questionsData.responses);
-                    setJobReqId(jobReqIdparam);
-
-                    const jobReqData = await request.getRequest("/Form/getDetail/"+jobReqIdparam);
-                    if (!jobReqData.isActive) {
-                        setSuccessAlert({text: localization.messages.closedPosting, show: true});
-                    } else {
-                        switchLanguage(jobReqData.country);
-                    }
-                    await loadCountries(jobReqData.country);
-                }
+            let queryParams = checkQueryParams(window.location.search.substring(1));
+            console.log("jobReqId: " + queryParams.jobReqId);
+            console.log("source: " + queryParams.source);
+            let userLang = navigator.language || navigator.userLanguage;
+            if(userLang !== undefined) {
+                console.log(userLang);
+                await switchLanguage(languageMap[userLang.toUpperCase()]);
             }
+            // if (!jobReqIdparam) {
+            //     setWarningAlert({text: localization.messages.badReqNumber, show: true});
+            // } else {
+            //
+            // }
             setBusy(false);
         }
-        fetchData();
+        fetchData().then(r => {
+            console.log("Data successfuly loaded: " + r);
+        });
     }, []);
+
+    const checkQueryParams = ( queryParamsString ) => {
+        const jobReqIdRegex = /jobReqId=(\d+)/;
+        const sourceRegex = /source=([^&]+)/;
+
+        const jobReqIdMatch = queryParamsString?.match(jobReqIdRegex);
+        const sourceMatch = queryParamsString?.match(sourceRegex);
+
+        const jobReqId = jobReqIdMatch ? jobReqIdMatch[1] : null;
+        const source = sourceMatch ? sourceMatch[1] : null;
+
+        console.log(`jobReqId: ${jobReqId}, source: ${source}`);
+
+        return { jobReqId: jobReqId, source: source };
+    }
+
+    const languageMap = {
+        "ENG": enLocalization,
+        "SVK": skLocalization,
+        "CZE": czLocalization,
+        "PLO": plLocalization,
+        "HUN": huLocalization,
+        "NLD": nlLocalization,
+        "FRA": frLocalization,
+        "ROU": roLocalization
+    }
 
     /**
      * Loads countries by language
@@ -153,7 +170,6 @@ const Form = () => {
      */
     const switchLanguage = async (language) => {
         setLanguage(language);
-        loadCountries(language);
         switch (language){
             case "ENG":
                 setLocalization(enLocalization);
@@ -349,7 +365,7 @@ const Form = () => {
 
     /**
      * Sets correct statement language for specifi countries
-     * @param {} event 
+     * @param event
      */
     const changeCountry = (event) => {
         setUserModel(userModel => { return { ...userModel, country: event.target.value }});

@@ -1,9 +1,9 @@
 /**
- * request.js handles all requests
- * @author Adam Baťala
+ * request.js handles all requests to the backend
  */
 import CONST from "./constants";
 import { encode } from "base-64";
+import axios from "axios";
 
 const root = "/easyapply"
 const STATUS_NO_CONTENT = 204;
@@ -41,59 +41,44 @@ const getRequest = (path, data) => {
 };
 
 /**
- * Creates delete request
- * @param {String} path 
- * @returns Promise
- */
-const deleteRequest = (path) => {
-    return _createRequest(path, {
-        method: "DELETE"
-    });
-};
-
-/**
- * Creates put request
- * @param {String} path 
- * @param {Object} data 
- * @returns Promise
- */
-const putRequest = (path, data) => {
-    return _createRequest(path, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    });
-};
-
-/**
  * Creates promise to communicate with backend
  * @param {String} path 
  * @param {Object} config 
  * @returns Promise
  */
 const _createRequest = (path, config) => {
-    config.headers = Object.assign({
+    const defaultHeaders = {
         'Authorization': 'Basic ' + encode(CONST.User + ":" + CONST.Pass)
-    }, config.headers);
+    };
 
-    return fetch(CONST.Host + root + path, config).then(response => {
-        if (!response.ok) {
-            return response;
+    const axiosConfig = {
+        ...config,
+        headers: {
+            ...defaultHeaders,
+            ...config.headers
         }
+    }
 
-        if (response.status !== STATUS_NO_CONTENT) {
-            return response.json();
-        }
-    }).catch(err => {
-        console.log(err);
-    });
+    if(axiosConfig.method.toUpperCase() === "GET") {
+        axiosConfig.params = config.data;
+    } else {
+        axiosConfig.data = config.data;
+    }
+
+    const url = `${CONST.Host}${root}${path}`;
+
+    return axios({ url, ...axiosConfig })
+        .then(response => {
+            if (response.status !== STATUS_NO_CONTENT) {
+                return response.data;
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
 };
 
 export default {
     postRequest,
-    getRequest,
-    putRequest,
-    deleteRequest
+    getRequest
 }
