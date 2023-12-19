@@ -3,7 +3,7 @@
  */
 import CONST from "./constants";
 import { encode } from "base-64";
-import axios from "axios";
+import axios, {formToJSON} from "axios";
 
 const root = "/easyapply"
 const STATUS_NO_CONTENT = 204;
@@ -26,17 +26,16 @@ const postRequest = (path, data) => {
 
 /**
  * Creates get request
- * @param {String} path 
- * @param {Object} data 
+ * @param {String} path
  * @returns Promise
  */
-const getRequest = (path, data) => {
+const getRequest = path => {
     return _createRequest(path, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify(data)
+        data: {}
     });
 };
 
@@ -51,6 +50,7 @@ const _createRequest = (path, config) => {
         'Authorization': 'Basic ' + encode(CONST.User + ":" + CONST.Pass)
     };
 
+
     const axiosConfig = {
         ...config,
         headers: {
@@ -58,7 +58,7 @@ const _createRequest = (path, config) => {
             ...config.headers
         }
     }
-
+    console.log("axiosConfig", axiosConfig);
     if(axiosConfig.method.toUpperCase() === "GET") {
         axiosConfig.params = config.data;
     } else {
@@ -69,12 +69,33 @@ const _createRequest = (path, config) => {
 
     return axios({ url, ...axiosConfig })
         .then(response => {
-            if (response.status !== STATUS_NO_CONTENT) {
-                return response.data;
+            if (response.status === 200 || response.status === 204) {
+                return response.data ? JSON.stringify(response.data) : null;
             }
+
+            let errorMessage;
+            switch (response.status) {
+                case 400:
+                    errorMessage = 'Bad request. Please check your input.';
+                    break;
+                case 401:
+                    errorMessage = 'Unauthorized. Please login again.';
+                    break;
+                case 403:
+                    errorMessage = 'Forbidden. You do not have permission to access this resource.';
+                    break;
+                case 404:
+                    errorMessage = 'Not found. The requested resource does not exist.';
+                    break;
+                default:
+                    // Log unexpected status code
+                    console.error(`Unexpected status code: ${response.status}`);
+                    errorMessage = 'An unexpected error occurred. Please try again later.';
+            }
+            throw new Error(errorMessage);
         })
         .catch(err => {
-            console.log(err);
+            console.log(err.message);
         });
 };
 

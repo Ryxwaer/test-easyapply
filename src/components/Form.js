@@ -84,18 +84,22 @@ const Form = () => {
             console.log("source: " + queryParams.source);
             let userLang = navigator.language || navigator.userLanguage;
             if(userLang !== undefined) {
-                console.log(userLang);
-                await switchLanguage(languageMap[userLang.toUpperCase()]);
+                console.log("User language: " + userLanguageMap[userLang]);
+                await switchLanguage(userLanguageMap[userLang]);
             }
-            // if (!jobReqIdparam) {
-            //     setWarningAlert({text: localization.messages.badReqNumber, show: true});
-            // } else {
-            //
-            // }
+            if (!queryParams?.jobReqId) {
+                console.log("No jobReqId found");
+                setWarningAlert({text: localization.messages.badReqNumber, show: true});
+            } else {
+                const response = await request.getRequest("/form?jobReqId=" + queryParams.jobReqId + "&source=" + queryParams.source);
+                if(response !== null) {
+
+                }
+            }
             setBusy(false);
         }
         fetchData().then(r => {
-            console.log("Data successfuly loaded: " + r);
+            console.log("Data successfully loaded: " + r);
         });
     }, []);
 
@@ -114,15 +118,15 @@ const Form = () => {
         return { jobReqId: jobReqId, source: source };
     }
 
-    const languageMap = {
-        "ENG": enLocalization,
-        "SVK": skLocalization,
-        "CZE": czLocalization,
-        "PLO": plLocalization,
-        "HUN": huLocalization,
-        "NLD": nlLocalization,
-        "FRA": frLocalization,
-        "ROU": roLocalization
+    const userLanguageMap = {
+        "en-US": "ENG",
+        "sk": "SVK",
+        "cs": "CZE",
+        "pl": "PLO",
+        "hu": "HUN",
+        "nl": "NLD",
+        "fr": "FRA",
+        "ro": "ROU"
     }
 
     /**
@@ -160,7 +164,7 @@ const Form = () => {
                 localization = "en_GB";
         }
 
-        const response = await request.getRequest("/Form/getCountries/"+localization);
+        const response = await request.getRequest("/form/getCountries/" + localization);
         setCountries(response);
     }
 
