@@ -27,6 +27,7 @@
     "apply": "apply",
     "answer": "Your answer ...",
     "messages": {
+        "invalidUrl": "The path of the url has incorrect format. Please go back to the source page and try again.",
         "existingUser": "User already exists, we have problem to update your data. Please use new email.",
         "badReqNumber": "Please navigate to the page again because the job posting number is incorrect.",
         "badUrl": "Something is wrong with your url, please redirect on page again or contact our support.",

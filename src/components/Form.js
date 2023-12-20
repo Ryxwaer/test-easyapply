@@ -87,16 +87,27 @@ const Form = () => {
                 console.log("User language: " + userLanguageMap[userLang]);
                 await switchLanguage(userLanguageMap[userLang]);
             }
-            if (!queryParams?.jobReqId) {
-                console.log("No jobReqId found");
-                setWarningAlert({text: localization.messages.badReqNumber, show: true});
+            // check valid url from client
+            let url = new URL(window.location.href);
+            let path = url.pathname;
+            console.log("Path: " + path);
+            if (!isValidPath(path)) {
+                console.log("isValidPath: " + isValidPath(path));
+                setWarningAlert({text: localization.messages.invalidUrl, show: true});
             } else {
-                const response = await request.getRequest("/form?jobReqId=" + queryParams.jobReqId + "&source=" + queryParams.source);
-                if(response !== null) {
-
+                if (!queryParams?.jobReqId) {
+                    console.log("No jobReqId found");
+                    setWarningAlert({text: localization.messages.badReqNumber, show: true});
+                } else {
+                    const response = await request.getRequest("/form?jobReqId=" + queryParams.jobReqId + "&source=" + queryParams.source);
+                    if(response == null) {
+                        setTimeout(() => {
+                            setBusy(false);
+                            setWarningAlert({text: localization.messages.badUrl, show: true});
+                        });
+                    }
                 }
             }
-            setBusy(false);
         }
         fetchData().then(r => {
             console.log("Data successfully loaded: " + r);
@@ -127,6 +138,10 @@ const Form = () => {
         "nl": "NLD",
         "fr": "FRA",
         "ro": "ROU"
+    }
+
+    function isValidPath(path) {
+        return path === '/easyapply/form' || path === '';
     }
 
     /**
